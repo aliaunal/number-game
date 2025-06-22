@@ -1,67 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Variable Grid Game</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Variable Grid Game - Responsive</title>
   <style>
+    :root {
+      --size: 10;
+    }
     body {
       font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 20px;
+      margin: 20px 10px;
+      padding: 0;
+      overflow-x: hidden;
+      background: #fafafa;
+      -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.6rem;
     }
     #grid {
       display: grid;
-      gap: 2px;
+      gap: 6px;
+      max-width: 95vw;
+      width: 100%;
+      max-height: 95vh;
+      grid-template-columns: repeat(var(--size), 1fr);
+      grid-template-rows: repeat(var(--size), 1fr);
+      touch-action: manipulation; /* improve touch responsiveness */
+      user-select: none;
+      margin-bottom: 15px;
     }
     .cell {
-      width: 40px;
-      height: 40px;
+      aspect-ratio: 1 / 1;
+      min-width: 44px;
+      max-width: 60px;
+      font-size: 1.3rem;
+      font-weight: bold;
       background-color: #f0f0f0;
-      border: 1px solid #ccc;
+      border: 1.8px solid #ccc;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.25s;
+      user-select: none;
     }
-    .filled {
+    .cell.filled {
       background-color: #90caf9;
+      color: #003366;
     }
     .highlight-updown {
-      background-color: lightgreen;
+      background-color: #a3dca1; /* pastel green */
+      color: #034d03;
     }
     .highlight-diagonal {
-      background-color: khaki;
+      background-color: #f9e79f; /* pastel yellow */
+      color: #6e5d01;
     }
     .undone {
-      background-color: lightcoral !important;
+      background-color: #f1948a !important; /* pastel coral */
+      color: #660000;
     }
     #status {
-      margin-top: 10px;
-      font-size: 18px;
+      margin-top: 8px;
+      font-size: 1.15rem;
+      min-height: 1.5em;
       text-align: center;
+      color: #222;
+      user-select: none;
     }
     button, select {
-      margin: 10px 5px;
-      padding: 8px 16px;
+      font-size: 1.15rem;
+      padding: 12px 22px;
+      border-radius: 8px;
+      border: 1.5px solid #999;
+      background-color: #e3e3e3;
+      cursor: pointer;
+      margin: 10px 6px;
+      user-select: none;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    button:hover, select:hover {
+      background-color: #d0d0d0;
+      border-color: #666;
     }
     #restartBtn {
-      display: none; /* Hidden by default */
+      display: none;
       margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+      background-color: #f28b82;
+      border-color: #cc4943;
+      color: white;
+      font-weight: bold;
+      user-select: none;
+    }
+    #restartBtn:hover {
+      background-color: #cc4943;
+    }
+    label {
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+      user-select: none;
+    }
+    /* Smaller font on very small screens */
+    @media (max-width: 350px) {
+      .cell {
+        min-width: 38px;
+        max-width: 50px;
+        font-size: 1.1rem;
+      }
+      button, select {
+        font-size: 1rem;
+        padding: 10px 18px;
+      }
+      #status {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
 
 <h1>Variable Grid Game: Just fill in the squares with numbers!</h1>
+
 <label for="gridSize">Grid Size:</label>
-<select id="gridSize">
+<select id="gridSize" aria-label="Select grid size">
   <option value="5">5x5</option>
   <option value="6">6x6</option>
   <option value="7">7x7</option>
@@ -79,159 +148,149 @@
   <option value="19">19x19</option>
   <option value="20">20x20</option>
 </select>
-<button onclick="startGame()">Start Game</button>
-<button onclick="undoMove()">Undo</button>
-<div id="grid"></div>
-<div id="status">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
-<button id="restartBtn" onclick="startGame()">Restart</button> <!-- Restart button -->
+
+<div>
+  <button onclick="startGame()" aria-label="Start new game">Start Game</button>
+  <button onclick="undoMove()" aria-label="Undo last move">Undo</button>
+</div>
+
+<div id="grid" role="grid" aria-label="Game grid"></div>
+<div id="status" aria-live="polite" aria-atomic="true">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
+<button id="restartBtn" onclick="startGame()" aria-label="Restart game">Restart</button>
 
 <script>
-let size = 10;
-let grid = document.getElementById('grid');
-let statusDiv = document.getElementById('status');
-let undoCountDisplay = document.getElementById('undoCount');
-let restartBtn = document.getElementById('restartBtn');
-let cells = [];
-let board = [];
-let currentNumber = 1;
-let moveHistory = [];
-let undosLeft = 2;
+  let size = 10;
+  const grid = document.getElementById('grid');
+  const statusDiv = document.getElementById('status');
+  const undoCountDisplay = document.getElementById('undoCount');
+  const restartBtn = document.getElementById('restartBtn');
+  let cells = [];
+  let board = [];
+  let currentNumber = 1;
+  let moveHistory = [];
+  let undosLeft = 2;
 
-const upDownDirs = [[-3,0],[3,0],[0,-3],[0,3]];
-const diagonalDirs = [[-2,-2],[-2,2],[2,-2],[2,2]];
+  const upDownDirs = [[-3,0],[3,0],[0,-3],[0,3]];
+  const diagonalDirs = [[-2,-2],[-2,2],[2,-2],[2,2]];
 
-function isInBounds(row, col) {
-  return row >= 0 && row < size && col >= 0 && col < size;
-}
-
-function clearHighlights() {
-  for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) {
-      cells[row][col].classList.remove('highlight-updown', 'highlight-diagonal', 'undone');
-    }
+  function isInBounds(row, col) {
+    return row >= 0 && row < size && col >= 0 && col < size;
   }
-}
 
-function getNextMoveCount(row, col) {
-  let count = 0;
-  for (let [dr, dc] of upDownDirs) {
-    const r = row + dr;
-    const c = col + dc;
-    if (isInBounds(r, c) && board[r][c] === 0) count++;
-  }
-  for (let [dr, dc] of diagonalDirs) {
-    const r = row + dr;
-    const c = col + dc;
-    if (isInBounds(r, c) && board[r][c] === 0) count++;
-  }
-  return count;
-}
-
-function highlightNextMoves(row, col) {
-  clearHighlights();
-  let movesFound = false;
-  for (let [dr, dc] of upDownDirs) {
-    const r = row + dr;
-    const c = col + dc;
-    if (isInBounds(r, c) && board[r][c] === 0) {
-      cells[r][c].classList.add('highlight-updown');
-      movesFound = true;
-    }
-  }
-  for (let [dr, dc] of diagonalDirs) {
-    const r = row + dr;
-    const c = col + dc;
-    if (isInBounds(r, c) && board[r][c] === 0) {
-      cells[r][c].classList.add('highlight-diagonal');
-      movesFound = true;
+  function clearHighlights() {
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        cells[row][col].classList.remove('highlight-updown', 'highlight-diagonal', 'undone');
+      }
     }
   }
 
-  if (!movesFound) {
-    statusDiv.textContent = 'No more moves left! 🎲';
-    restartBtn.style.display = 'inline-block'; // Show restart button
+  function highlightNextMoves(row, col) {
     clearHighlights();
-  } else {
-    statusDiv.textContent = 'Undos left: ' + undosLeft + '. Click a highlighted square to continue.';
-    restartBtn.style.display = 'none'; // Hide restart button
-  }
-}
+    let movesFound = false;
+    for (let [dr, dc] of upDownDirs) {
+      const r = row + dr;
+      const c = col + dc;
+      if (isInBounds(r, c) && board[r][c] === 0) {
+        cells[r][c].classList.add('highlight-updown');
+        movesFound = true;
+      }
+    }
+    for (let [dr, dc] of diagonalDirs) {
+      const r = row + dr;
+      const c = col + dc;
+      if (isInBounds(r, c) && board[r][c] === 0) {
+        cells[r][c].classList.add('highlight-diagonal');
+        movesFound = true;
+      }
+    }
 
-function cellClick(row, col) {
-  if (board[row][col] !== 0) return;
-  const valid = currentNumber === 1 ||
-    cells[row][col].classList.contains('highlight-updown') ||
-    cells[row][col].classList.contains('highlight-diagonal');
-
-  if (!valid) return;
-
-  board[row][col] = currentNumber;
-  cells[row][col].textContent = currentNumber;
-  cells[row][col].classList.add('filled');
-  cells[row][col].classList.remove('undone');
-  moveHistory.push([row, col]);
-  currentNumber++;
-
-  if (currentNumber > size * size) {
-    statusDiv.textContent = '🎉 You completed the game!';
-    restartBtn.style.display = 'inline-block'; // Show restart button
-    clearHighlights();
-    return;
-  }
-
-  highlightNextMoves(row, col);
-}
-
-function undoMove() {
-  if (moveHistory.length === 0 || undosLeft <= 0) return;
-  const [row, col] = moveHistory.pop();
-  board[row][col] = 0;
-  cells[row][col].textContent = '';
-  cells[row][col].classList.remove('filled');
-  cells[row][col].classList.add('undone');
-  currentNumber--;
-  undosLeft--;
-  undoCountDisplay.textContent = undosLeft;
-  clearHighlights();
-  if (currentNumber > 1) {
-    const [prevRow, prevCol] = moveHistory[moveHistory.length - 1] || [row, col];
-    highlightNextMoves(prevRow, prevCol);
-  }
-}
-
-function buildGrid() {
-  grid.innerHTML = '';
-  grid.style.gridTemplateColumns = `repeat(${size}, 40px)`;
-  grid.style.gridTemplateRows = `repeat(${size}, 40px)`;
-  cells = [];
-  board = [];
-  for (let row = 0; row < size; row++) {
-    cells[row] = [];
-    board[row] = [];
-    for (let col = 0; col < size; col++) {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.onclick = () => cellClick(row, col);
-      grid.appendChild(cell);
-      cells[row][col] = cell;
-      board[row][col] = 0;
+    if (!movesFound) {
+      statusDiv.textContent = 'No more moves left! 🎲';
+      restartBtn.style.display = 'inline-block';
+      clearHighlights();
+    } else {
+      statusDiv.textContent = 'Undos left: ' + undosLeft + '. Click a highlighted square to continue.';
+      restartBtn.style.display = 'none';
     }
   }
-  clearHighlights();
-}
 
-function startGame() {
-  size = parseInt(document.getElementById('gridSize').value);
-  currentNumber = 1;
-  moveHistory = [];
-  undosLeft = 2;
-  undoCountDisplay.textContent = undosLeft;
-  statusDiv.textContent = 'Click a square to begin! Undos left: ' + undosLeft;
-  restartBtn.style.display = 'none'; // Hide restart button on new game
-  buildGrid();
-}
+  function cellClick(row, col) {
+    if (board[row][col] !== 0) return;
+    const valid = currentNumber === 1 ||
+      cells[row][col].classList.contains('highlight-updown') ||
+      cells[row][col].classList.contains('highlight-diagonal');
 
-startGame();
+    if (!valid) return;
+
+    board[row][col] = currentNumber;
+    cells[row][col].textContent = currentNumber;
+    cells[row][col].classList.add('filled');
+    cells[row][col].classList.remove('undone');
+    moveHistory.push([row, col]);
+    currentNumber++;
+
+    if (currentNumber > size * size) {
+      statusDiv.textContent = '🎉 You completed the game!';
+      restartBtn.style.display = 'inline-block';
+      clearHighlights();
+      return;
+    }
+
+    highlightNextMoves(row, col);
+  }
+
+  function undoMove() {
+    if (moveHistory.length === 0 || undosLeft <= 0) return;
+    const [row, col] = moveHistory.pop();
+    board[row][col] = 0;
+    cells[row][col].textContent = '';
+    cells[row][col].classList.remove('filled');
+    cells[row][col].classList.add('undone');
+    currentNumber--;
+    undosLeft--;
+    undoCountDisplay.textContent = undosLeft;
+    clearHighlights();
+    if (currentNumber > 1) {
+      const [prevRow, prevCol] = moveHistory[moveHistory.length - 1] || [row, col];
+      highlightNextMoves(prevRow, prevCol);
+    }
+  }
+
+  function buildGrid() {
+    grid.innerHTML = '';
+    document.documentElement.style.setProperty('--size', size);
+    cells = [];
+    board = [];
+    for (let row = 0; row < size; row++) {
+      cells[row] = [];
+      board[row] = [];
+      for (let col = 0; col < size; col++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.onclick = () => cellClick(row, col);
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('tabindex', '0');
+        grid.appendChild(cell);
+        cells[row][col] = cell;
+        board[row][col] = 0;
+      }
+    }
+    clearHighlights();
+  }
+
+  function startGame() {
+    size = parseInt(document.getElementById('gridSize').value);
+    currentNumber = 1;
+    moveHistory = [];
+    undosLeft = 2;
+    undoCountDisplay.textContent = undosLeft;
+    statusDiv.textContent = 'Click a square to begin! Undos left: ' + undosLeft;
+    restartBtn.style.display = 'none';
+    buildGrid();
+  }
+
+  startGame();
 </script>
 
   <footer style="margin-top: 20px; font-size: 14px; color: #666;">© 2025 Ali A. Ünal</footer>
