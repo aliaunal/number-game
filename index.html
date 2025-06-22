@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Variable Grid Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+    #grid {
+      display: grid;
+      gap: 2px;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .filled {
+      background-color: #90caf9;
+    }
+    .highlight-updown {
+      background-color: lightgreen;
+    }
+    .highlight-diagonal {
+      background-color: khaki;
+    }
+    .undone {
+      background-color: lightcoral !important;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    button, select {
+      margin: 10px 5px;
+      padding: 8px 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Variable Grid Game: Just fill in the squares with numbers!</h1>
+<label for="gridSize">Grid Size:</label>
+<select id="gridSize">
+  <option value="5">5x5</option>
+  <option value="6">6x6</option>
+  <option value="7">7x7</option>
+  <option value="8">8x8</option>
+  <option value="9">9x9</option>
+  <option value="10" selected>10x10</option>
+  <option value="11">11x11</option>
+  <option value="12">12x12</option>
+  <option value="13">13x13</option>
+  <option value="14">14x14</option>
+  <option value="15">15x15</option>
+  <option value="16">16x16</option>
+  <option value="17">17x17</option>
+  <option value="18">18x18</option>
+  <option value="19">19x19</option>
+  <option value="20">20x20</option>
+</select>
+<button onclick="startGame()">Start Game</button>
+<button onclick="undoMove()">Undo</button>
+<div id="grid"></div>
+<div id="status">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
+
+<script>
+let size = 10;
+let grid = document.getElementById('grid');
+let statusDiv = document.getElementById('status');
+let undoCountDisplay = document.getElementById('undoCount');
+let cells = [];
+let board = [];
+let currentNumber = 1;
+let moveHistory = [];
+let undosLeft = 2;
+
+const upDownDirs = [[-3,0],[3,0],[0,-3],[0,3]];
+const diagonalDirs = [[-2,-2],[-2,2],[2,-2],[2,2]];
+
+function isInBounds(row, col) {
+  return row >= 0 && row < size && col >= 0 && col < size;
+}
+
+function clearHighlights() {
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      cells[row][col].classList.remove('highlight-updown', 'highlight-diagonal', 'undone');
+    }
+  }
+}
+
+function highlightNextMoves(row, col) {
+  clearHighlights();
+  for (let [dr, dc] of upDownDirs) {
+    const r = row + dr;
+    const c = col + dc;
+    if (isInBounds(r, c) && board[r][c] === 0) {
+      cells[r][c].classList.add('highlight-updown');
+    }
+  }
+  for (let [dr, dc] of diagonalDirs) {
+    const r = row + dr;
+    const c = col + dc;
+    if (isInBounds(r, c) && board[r][c] === 0) {
+      cells[r][c].classList.add('highlight-diagonal');
+    }
+  }
+}
+
+function cellClick(row, col) {
+  if (board[row][col] !== 0) return;
+  const valid = currentNumber === 1 ||
+    cells[row][col].classList.contains('highlight-updown') ||
+    cells[row][col].classList.contains('highlight-diagonal');
+
+  if (!valid) return;
+
+  board[row][col] = currentNumber;
+  cells[row][col].textContent = currentNumber;
+  cells[row][col].classList.add('filled');
+  cells[row][col].classList.remove('undone');
+  moveHistory.push([row, col]);
+  currentNumber++;
+
+  if (currentNumber > size * size) {
+    statusDiv.textContent = '🎉 You completed the game!';
+    clearHighlights();
+    return;
+  }
+
+  highlightNextMoves(row, col);
+}
+
+function undoMove() {
+  if (moveHistory.length === 0 || undosLeft <= 0) return;
+  const [row, col] = moveHistory.pop();
+  board[row][col] = 0;
+  cells[row][col].textContent = '';
+  cells[row][col].classList.remove('filled');
+  cells[row][col].classList.add('undone');
+  currentNumber--;
+  undosLeft--;
+  undoCountDisplay.textContent = undosLeft;
+  clearHighlights();
+  if (currentNumber > 1) {
+    const [prevRow, prevCol] = moveHistory[moveHistory.length - 1] || [row, col];
+    highlightNextMoves(prevRow, prevCol);
+  }
+}
+
+function buildGrid() {
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = `repeat(${size}, 40px)`;
+  grid.style.gridTemplateRows = `repeat(${size}, 40px)`;
+  cells = [];
+  board = [];
+  for (let row = 0; row < size; row++) {
+    cells[row] = [];
+    board[row] = [];
+    for (let col = 0; col < size; col++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.onclick = () => cellClick(row, col);
+      grid.appendChild(cell);
+      cells[row][col] = cell;
+      board[row][col] = 0;
+    }
+  }
+  clearHighlights();
+}
+
+function startGame() {
+  size = parseInt(document.getElementById('gridSize').value);
+  currentNumber = 1;
+  moveHistory = [];
+  undosLeft = 2;
+  undoCountDisplay.textContent = undosLeft;
+  statusDiv.textContent = 'Click a square to begin! Undos left: ' + undosLeft;
+  buildGrid();
+}
+
+startGame();
+</script>
+
+</body>
+</html>
