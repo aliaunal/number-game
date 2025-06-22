@@ -42,10 +42,18 @@
     #status {
       margin-top: 10px;
       font-size: 18px;
+      text-align: center;
     }
     button, select {
       margin: 10px 5px;
       padding: 8px 16px;
+    }
+    #restartBtn {
+      display: none; /* Hidden by default */
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -75,12 +83,14 @@
 <button onclick="undoMove()">Undo</button>
 <div id="grid"></div>
 <div id="status">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
+<button id="restartBtn" onclick="startGame()">Restart</button> <!-- Restart button -->
 
 <script>
 let size = 10;
 let grid = document.getElementById('grid');
 let statusDiv = document.getElementById('status');
 let undoCountDisplay = document.getElementById('undoCount');
+let restartBtn = document.getElementById('restartBtn');
 let cells = [];
 let board = [];
 let currentNumber = 1;
@@ -102,13 +112,30 @@ function clearHighlights() {
   }
 }
 
+function getNextMoveCount(row, col) {
+  let count = 0;
+  for (let [dr, dc] of upDownDirs) {
+    const r = row + dr;
+    const c = col + dc;
+    if (isInBounds(r, c) && board[r][c] === 0) count++;
+  }
+  for (let [dr, dc] of diagonalDirs) {
+    const r = row + dr;
+    const c = col + dc;
+    if (isInBounds(r, c) && board[r][c] === 0) count++;
+  }
+  return count;
+}
+
 function highlightNextMoves(row, col) {
   clearHighlights();
+  let movesFound = false;
   for (let [dr, dc] of upDownDirs) {
     const r = row + dr;
     const c = col + dc;
     if (isInBounds(r, c) && board[r][c] === 0) {
       cells[r][c].classList.add('highlight-updown');
+      movesFound = true;
     }
   }
   for (let [dr, dc] of diagonalDirs) {
@@ -116,7 +143,17 @@ function highlightNextMoves(row, col) {
     const c = col + dc;
     if (isInBounds(r, c) && board[r][c] === 0) {
       cells[r][c].classList.add('highlight-diagonal');
+      movesFound = true;
     }
+  }
+
+  if (!movesFound) {
+    statusDiv.textContent = 'No more moves left! 🎲';
+    restartBtn.style.display = 'inline-block'; // Show restart button
+    clearHighlights();
+  } else {
+    statusDiv.textContent = 'Undos left: ' + undosLeft + '. Click a highlighted square to continue.';
+    restartBtn.style.display = 'none'; // Hide restart button
   }
 }
 
@@ -137,6 +174,7 @@ function cellClick(row, col) {
 
   if (currentNumber > size * size) {
     statusDiv.textContent = '🎉 You completed the game!';
+    restartBtn.style.display = 'inline-block'; // Show restart button
     clearHighlights();
     return;
   }
@@ -189,6 +227,7 @@ function startGame() {
   undosLeft = 2;
   undoCountDisplay.textContent = undosLeft;
   statusDiv.textContent = 'Click a square to begin! Undos left: ' + undosLeft;
+  restartBtn.style.display = 'none'; // Hide restart button on new game
   buildGrid();
 }
 
