@@ -32,7 +32,11 @@
       --dark-highlight-updown: rgba(129, 199, 132, 0.3);
       --dark-highlight-diagonal: rgba(255, 202, 105, 0.3);
     }
-
+   
+    div {
+      white-space: pre-line;
+    }
+    
     body {
       font-family: 'Raleway', sans-serif;
       background-color: var(--bg-color);
@@ -222,9 +226,6 @@
       <input type="checkbox" id="hideNumbers" /> Hide Numbers
     </label>
     <label class="toggle">
-      <input type="checkbox" id="hardcoreMode" /> Hardcore Mode
-    </label>
-    <label class="toggle">
       <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)" /> Dark Mode
     </label>
   </div>
@@ -392,8 +393,8 @@
     currentNumber = 1;
     moveHistory = [];
     undosLeft = hardcoreCheckbox.checked ? 0 : 2;
-    undoCountDisplay.textContent = undosLeft;
-    statusDiv.InnerText = `Click a square to begin! \n Skip two squares when going right, left, up or down. \n Skip one square when going diagonally. \n See if you can fill the grid!`;
+    undoCountDisplay.innerText = undosLeft;
+    statusDiv.innerText = `Click a square to begin! \n Skip two squares when going right, left, up or down. \n Skip one square when going diagonally. \n See if you can fill the grid!`;
     buildGrid();
     clearInterval(moveTimer);
     clearHighlights();
