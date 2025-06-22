@@ -3,317 +3,303 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Variable Grid Game - Responsive</title>
+  <title>Variable Grid Game</title>
   <style>
     :root {
-      --size: 10;
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --cell-bg: #f0f0f0;
+      --cell-border: #ccc;
+      --cell-filled: #90caf9;
+      --highlight-updown: lightgreen;
+      --highlight-diagonal: khaki;
+      --highlight-recent: #42a5f5;
+    }
+    body.dark {
+      --bg-color: #1e1e1e;
+      --text-color: #ffffff;
+      --cell-bg: #333;
+      --cell-border: #666;
+      --cell-filled: #2196f3;
+      --highlight-updown: #388e3c;
+      --highlight-diagonal: #fbc02d;
+      --highlight-recent: #64b5f6;
     }
     body {
       font-family: sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 20px 10px;
-      padding: 0;
-      overflow-x: hidden;
-      background: #fafafa;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 10px;
+      transition: background 0.3s, color 0.3s;
     }
-    h1 {
-      text-align: center;
-      margin-bottom: 15px;
-      font-size: 1.6rem;
-    }
-    /* Desktop styles (default) */
     #grid {
       display: grid;
       gap: 2px;
-      max-width: none;
-      width: auto;
-      grid-template-columns: repeat(var(--size), 40px);
-      grid-template-rows: repeat(var(--size), 40px);
-      margin: 0 auto 15px auto;
-      touch-action: manipulation;
-      user-select: none;
+      margin-top: 10px;
     }
     .cell {
       width: 40px;
       height: 40px;
-      font-size: 1rem;
-      font-weight: bold;
-      background-color: #f0f0f0;
-      border: 1px solid #ccc;
+      background-color: var(--cell-bg);
+      border: 1px solid var(--cell-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 3px;
+      font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.25s;
+      transition: background-color 0.2s, transform 0.2s;
       user-select: none;
     }
-    .cell.filled {
-      background-color: #90caf9;
-      color: #003366;
+    .filled {
+      background-color: var(--cell-filled);
+      animation: fillAnim 0.2s ease-in-out;
+    }
+    @keyframes fillAnim {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
     .highlight-updown {
-      background-color: #a3dca1; /* pastel green */
-      color: #034d03;
+      background-color: var(--highlight-updown);
     }
     .highlight-diagonal {
-      background-color: #f9e79f; /* pastel yellow */
-      color: #6e5d01;
+      background-color: var(--highlight-diagonal);
+    }
+    .highlight-recent {
+      outline: 2px solid var(--highlight-recent);
     }
     .undone {
-      background-color: #f1948a !important; /* pastel coral */
-      color: #660000;
+      background-color: lightcoral !important;
+    }
+    #controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
     }
     #status {
-      margin-top: 8px;
-      font-size: 1.15rem;
-      min-height: 1.5em;
-      text-align: center;
-      color: #222;
-      user-select: none;
-    }
-    button, select {
-      font-size: 1.15rem;
-      padding: 12px 22px;
-      border-radius: 8px;
-      border: 1.5px solid #999;
-      background-color: #e3e3e3;
-      cursor: pointer;
-      margin: 10px 6px;
-      user-select: none;
-      transition: background-color 0.2s, border-color 0.2s;
-    }
-    button:hover, select:hover {
-      background-color: #d0d0d0;
-      border-color: #666;
-    }
-    #restartBtn {
-      display: none;
       margin-top: 10px;
-      background-color: #f28b82;
-      border-color: #cc4943;
-      color: white;
-      font-weight: bold;
-      user-select: none;
+      font-size: 18px;
     }
-    #restartBtn:hover {
-      background-color: #cc4943;
+    #timer {
+      margin-top: 5px;
+      font-size: 16px;
     }
-    label {
-      font-size: 1.1rem;
-      margin-bottom: 5px;
-      user-select: none;
+    button, select, label {
+      padding: 8px;
+      font-size: 14px;
     }
-
-    /* Mobile responsive styles */
-    @media (max-width: 600px) {
-      #grid {
-        max-width: 95vw;
-        width: 100%;
-        grid-template-columns: repeat(var(--size), 1fr);
-        grid-template-rows: repeat(var(--size), 1fr);
-        gap: 6px;
-      }
-      .cell {
-        aspect-ratio: 1 / 1;
-        min-width: 44px;
-        max-width: 60px;
-        font-size: 1.2rem;
-        border-radius: 8px;
-      }
-      button, select {
-        font-size: 1.1rem;
-        padding: 12px 18px;
-      }
-      #status {
-        font-size: 1.1rem;
-      }
-    }
-
-    /* Smaller font on very small screens */
-    @media (max-width: 350px) {
-      .cell {
-        min-width: 38px;
-        max-width: 50px;
-        font-size: 1.1rem;
-      }
-      button, select {
-        font-size: 1rem;
-        padding: 10px 14px;
-      }
-      #status {
-        font-size: 1rem;
-      }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
   </style>
 </head>
 <body>
-
-<h1>Variable Grid Game: Just fill in the squares with numbers!</h1>
-
-<label for="gridSize">Grid Size:</label>
-<select id="gridSize" aria-label="Select grid size">
-  <option value="5"selected>5x5</option>
-  <option value="6">6x6</option>
-  <option value="7">7x7</option>
-  <option value="8">8x8</option>
-  <option value="9">9x9</option>
-  <option value="10">10x10</option>
-  <option value="11">11x11</option>
-  <option value="12">12x12</option>
-  <option value="13">13x13</option>
-  <option value="14">14x14</option>
-  <option value="15">15x15</option>
-  <option value="16">16x16</option>
-  <option value="17">17x17</option>
-  <option value="18">18x18</option>
-  <option value="19">19x19</option>
-  <option value="20">20x20</option>
-</select>
-
-<div>
-  <button onclick="startGame()" aria-label="Start new game">Start Game</button>
-  <button onclick="undoMove()" aria-label="Undo last move">Undo</button>
-</div>
-
-<div id="grid" role="grid" aria-label="Game grid"></div>
-<div id="status" aria-live="polite" aria-atomic="true">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
-<button id="restartBtn" onclick="startGame()" aria-label="Restart game">Restart</button>
+  <h1>Variable Grid Game</h1>
+  <div id="controls">
+    <label>
+      Grid Size:
+      <select id="gridSize"></select>
+    </label>
+    <button onclick="startGame()">Start Game</button>
+    <button onclick="undoMove()">Undo</button>
+    <label class="toggle">
+      <input type="checkbox" id="hideNumbers" /> Hide Numbers
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="hardcoreMode" /> Hardcore Mode
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)" /> Dark Mode
+    </label>
+  </div>
+  <div id="grid"></div>
+  <div id="status">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
+  <div id="timer">Move Timer: <span id="moveTimer">15</span>s</div>
 
 <script>
-  let size = 10;
   const grid = document.getElementById('grid');
   const statusDiv = document.getElementById('status');
+  const timerSpan = document.getElementById('moveTimer');
   const undoCountDisplay = document.getElementById('undoCount');
-  const restartBtn = document.getElementById('restartBtn');
-  let cells = [];
-  let board = [];
-  let currentNumber = 1;
-  let moveHistory = [];
-  let undosLeft = 2;
+  const hardcoreCheckbox = document.getElementById('hardcoreMode');
+  const hideNumbersCheckbox = document.getElementById('hideNumbers');
+  const gridSizeSelect = document.getElementById('gridSize');
 
   const upDownDirs = [[-3,0],[3,0],[0,-3],[0,3]];
   const diagonalDirs = [[-2,-2],[-2,2],[2,-2],[2,2]];
 
-  function isInBounds(row, col) {
-    return row >= 0 && row < size && col >= 0 && col < size;
+  let size = 5;
+  let cells = [], board = [], currentNumber = 1, moveHistory = [], undosLeft = 2;
+  let lastCell = null, moveTimer = null, secondsLeft = 15;
+
+  // Populate grid size options 5 to 20
+  for (let i = 5; i <= 20; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `${i}x${i}`;
+    if (i === 5) option.selected = true;
+    gridSizeSelect.appendChild(option);
+  }
+
+  function toggleDarkMode(enabled) {
+    document.body.classList.toggle('dark', enabled);
+  }
+
+  function isInBounds(r, c) {
+    return r >= 0 && r < size && c >= 0 && c < size;
   }
 
   function clearHighlights() {
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        cells[row][col].classList.remove('highlight-updown', 'highlight-diagonal', 'undone');
-      }
+    cells.flat().forEach(cell => {
+      cell.classList.remove('highlight-updown', 'highlight-diagonal', 'highlight-recent', 'undone');
+    });
+  }
+
+  function highlightMoves(r, c) {
+    clearHighlights();
+    for (let [dr, dc] of upDownDirs) {
+      const nr = r + dr, nc = c + dc;
+      if (isInBounds(nr, nc) && board[nr][nc] === 0)
+        cells[nr][nc].classList.add('highlight-updown');
+    }
+    for (let [dr, dc] of diagonalDirs) {
+      const nr = r + dr, nc = c + dc;
+      if (isInBounds(nr, nc) && board[nr][nc] === 0)
+        cells[nr][nc].classList.add('highlight-diagonal');
     }
   }
 
-  function highlightNextMoves(row, col) {
-    clearHighlights();
-    let movesFound = false;
-    for (let [dr, dc] of upDownDirs) {
-      const r = row + dr;
-      const c = col + dc;
-      if (isInBounds(r, c) && board[r][c] === 0) {
-        cells[r][c].classList.add('highlight-updown');
-        movesFound = true;
+  function updateTimer() {
+    clearInterval(moveTimer);
+    secondsLeft = 15;
+    timerSpan.textContent = secondsLeft;
+    moveTimer = setInterval(() => {
+      secondsLeft--;
+      timerSpan.textContent = secondsLeft;
+      if (secondsLeft <= 0) {
+        clearInterval(moveTimer);
+        alert('⏰ Time\'s up! Make a move faster next time.');
       }
-    }
-    for (let [dr, dc] of diagonalDirs) {
-      const r = row + dr;
-      const c = col + dc;
-      if (isInBounds(r, c) && board[r][c] === 0) {
-        cells[r][c].classList.add('highlight-diagonal');
-        movesFound = true;
-      }
-    }
-
-    if (!movesFound) {
-      statusDiv.textContent = 'No more moves left! 🎲';
-      restartBtn.style.display = 'inline-block';
-      clearHighlights();
-    } else {
-      statusDiv.textContent = 'Undos left: ' + undosLeft + '. Click a highlighted square to continue.';
-      restartBtn.style.display = 'none';
-    }
+    }, 1000);
   }
 
   function cellClick(row, col) {
-    if (board[row][col] !== 0) return;
-    const valid = currentNumber === 1 ||
-      cells[row][col].classList.contains('highlight-updown') ||
-      cells[row][col].classList.contains('highlight-diagonal');
+    if (board[row][col] !== 0) return; // already filled
+
+    let valid = false;
+
+    if (currentNumber === 1) {
+      valid = true; // first move always allowed
+    } else if (hardcoreCheckbox.checked) {
+      valid = board[row][col] === 0; // hardcore mode: any empty cell allowed
+    } else {
+      valid =
+        cells[row][col].classList.contains('highlight-updown') ||
+        cells[row][col].classList.contains('highlight-diagonal');
+    }
 
     if (!valid) return;
 
+    // Mark the cell
     board[row][col] = currentNumber;
-    cells[row][col].textContent = currentNumber;
+    if (!hideNumbersCheckbox.checked) cells[row][col].textContent = currentNumber;
     cells[row][col].classList.add('filled');
     cells[row][col].classList.remove('undone');
+
+    if (lastCell) lastCell.classList.remove('highlight-recent');
+    cells[row][col].classList.add('highlight-recent');
+    lastCell = cells[row][col];
+
     moveHistory.push([row, col]);
     currentNumber++;
+    navigator.vibrate?.(30);
+    updateTimer();
 
     if (currentNumber > size * size) {
+      clearInterval(moveTimer);
       statusDiv.textContent = '🎉 You completed the game!';
-      restartBtn.style.display = 'inline-block';
+      confetti();
+      localStorage.setItem('stage-' + size, 'completed');
       clearHighlights();
       return;
     }
 
-    highlightNextMoves(row, col);
+    // Show highlights only if NOT hardcore mode
+    if (!hardcoreCheckbox.checked) {
+      highlightMoves(row, col);
+    } else {
+      clearHighlights();
+    }
   }
 
   function undoMove() {
-    if (moveHistory.length === 0 || undosLeft <= 0) return;
-    const [row, col] = moveHistory.pop();
-    board[row][col] = 0;
-    cells[row][col].textContent = '';
-    cells[row][col].classList.remove('filled');
-    cells[row][col].classList.add('undone');
+    if (moveHistory.length === 0 || undosLeft <= 0 || hardcoreCheckbox.checked) return;
+    const [r, c] = moveHistory.pop();
+    board[r][c] = 0;
+    cells[r][c].textContent = '';
+    cells[r][c].classList.remove('filled');
+    cells[r][c].classList.add('undone');
     currentNumber--;
     undosLeft--;
     undoCountDisplay.textContent = undosLeft;
-    clearHighlights();
-    if (currentNumber > 1) {
-      const [prevRow, prevCol] = moveHistory[moveHistory.length - 1] || [row, col];
-      highlightNextMoves(prevRow, prevCol);
-    }
+    const [prevR, prevC] = moveHistory.at(-1) || [r, c];
+    highlightMoves(prevR, prevC);
+    updateTimer();
   }
 
   function buildGrid() {
     grid.innerHTML = '';
-    document.documentElement.style.setProperty('--size', size);
-    cells = [];
-    board = [];
-    for (let row = 0; row < size; row++) {
-      cells[row] = [];
-      board[row] = [];
-      for (let col = 0; col < size; col++) {
+    grid.style.gridTemplateColumns = `repeat(${size}, 40px)`;
+    grid.style.gridTemplateRows = `repeat(${size}, 40px)`;
+    cells = [], board = [];
+    for (let r = 0; r < size; r++) {
+      cells[r] = [];
+      board[r] = [];
+      for (let c = 0; c < size; c++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
-        cell.onclick = () => cellClick(row, col);
-        cell.setAttribute('role', 'gridcell');
-        cell.setAttribute('tabindex', '0');
+        cell.onclick = () => cellClick(r, c);
         grid.appendChild(cell);
-        cells[row][col] = cell;
-        board[row][col] = 0;
+        cells[r][c] = cell;
+        board[r][c] = 0;
       }
     }
-    clearHighlights();
+  }
+
+  function confetti() {
+    grid.style.animation = 'flash 0.5s ease-in-out';
+    setTimeout(() => grid.style.animation = '', 500);
   }
 
   function startGame() {
-    size = parseInt(document.getElementById('gridSize').value);
+    size = parseInt(gridSizeSelect.value);
     currentNumber = 1;
     moveHistory = [];
-    undosLeft = 2;
+    undosLeft = hardcoreCheckbox.checked ? 0 : 2;
     undoCountDisplay.textContent = undosLeft;
-    statusDiv.textContent = 'Click a square to begin! Undos left: ' + undosLeft;
-    restartBtn.style.display = 'none';
+    statusDiv.textContent = `Click a square to begin! Undos left: ${undosLeft}`;
     buildGrid();
+    clearInterval(moveTimer);
+    clearHighlights();
   }
+
+  // Keyboard controls: arrows to move selection, Enter to place number on current cell
+  document.addEventListener('keydown', (e) => {
+    if (!lastCell) return;
+    let [r, c] = moveHistory.at(-1) || [0, 0];
+    if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
+    if (e.key === 'ArrowDown') r = Math.min(size - 1, r + 1);
+    if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
+    if (e.key === 'ArrowRight') c = Math.min(size - 1, c + 1);
+    if (e.key === 'Enter') cellClick(r, c);
+  });
 
   startGame();
 </script>
