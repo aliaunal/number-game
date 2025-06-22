@@ -221,9 +221,9 @@
     <label class="toggle">
       <input type="checkbox" id="hideNumbers" /> Hide Numbers
     </label>
-    <label class="toggle">
-      <input type="checkbox" id="hardcoreMode" /> Hardcore Mode
-    </label>
+//    <label class="toggle">
+//      <input type="checkbox" id="hardcoreMode" /> Hardcore Mode
+//    </label>
     <label class="toggle">
       <input type="checkbox" id="darkMode" onchange="toggleDarkMode(this.checked)" /> Dark Mode
     </label>
@@ -393,7 +393,7 @@
     moveHistory = [];
     undosLeft = hardcoreCheckbox.checked ? 0 : 2;
     undoCountDisplay.textContent = undosLeft;
-    statusDiv.textContent = `Click a square to begin! Skip two squares when going right, left, up or down. Skip one square when going diagonally.`;
+    statusDiv.textContent = `Click a square to begin! <br>Skip two squares when going right, left, up or down. <br>Skip one square when going diagonally.<br>See if you can fill the grid!`;
     buildGrid();
     clearInterval(moveTimer);
     clearHighlights();
