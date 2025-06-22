@@ -17,37 +17,36 @@
       padding: 0;
       overflow-x: hidden;
       background: #fafafa;
-      -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+      -webkit-tap-highlight-color: transparent;
     }
     h1 {
       text-align: center;
       margin-bottom: 15px;
       font-size: 1.6rem;
     }
+    /* Desktop styles (default) */
     #grid {
       display: grid;
-      gap: 6px;
-      max-width: 95vw;
-      width: 100%;
-      max-height: 95vh;
-      grid-template-columns: repeat(var(--size), 1fr);
-      grid-template-rows: repeat(var(--size), 1fr);
-      touch-action: manipulation; /* improve touch responsiveness */
+      gap: 2px;
+      max-width: none;
+      width: auto;
+      grid-template-columns: repeat(var(--size), 40px);
+      grid-template-rows: repeat(var(--size), 40px);
+      margin: 0 auto 15px auto;
+      touch-action: manipulation;
       user-select: none;
-      margin-bottom: 15px;
     }
     .cell {
-      aspect-ratio: 1 / 1;
-      min-width: 44px;
-      max-width: 60px;
-      font-size: 1.3rem;
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
       font-weight: bold;
       background-color: #f0f0f0;
-      border: 1.8px solid #ccc;
+      border: 1px solid #ccc;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      border-radius: 3px;
       cursor: pointer;
       transition: background-color 0.25s;
       user-select: none;
@@ -108,6 +107,32 @@
       margin-bottom: 5px;
       user-select: none;
     }
+
+    /* Mobile responsive styles */
+    @media (max-width: 600px) {
+      #grid {
+        max-width: 95vw;
+        width: 100%;
+        grid-template-columns: repeat(var(--size), 1fr);
+        grid-template-rows: repeat(var(--size), 1fr);
+        gap: 6px;
+      }
+      .cell {
+        aspect-ratio: 1 / 1;
+        min-width: 44px;
+        max-width: 60px;
+        font-size: 1.2rem;
+        border-radius: 8px;
+      }
+      button, select {
+        font-size: 1.1rem;
+        padding: 12px 18px;
+      }
+      #status {
+        font-size: 1.1rem;
+      }
+    }
+
     /* Smaller font on very small screens */
     @media (max-width: 350px) {
       .cell {
@@ -117,7 +142,7 @@
       }
       button, select {
         font-size: 1rem;
-        padding: 10px 18px;
+        padding: 10px 14px;
       }
       #status {
         font-size: 1rem;
@@ -294,6 +319,6 @@
 </script>
 
   <footer style="margin-top: 20px; font-size: 14px; color: #666;">© 2025 Ali A. Ünal</footer>
-  
+
 </body>
 </html>
