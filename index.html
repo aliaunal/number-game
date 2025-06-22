@@ -284,7 +284,7 @@
     moveHistory = [];
     undosLeft = hardcoreCheckbox.checked ? 0 : 2;
     undoCountDisplay.textContent = undosLeft;
-    statusDiv.textContent = `Click a square to begin! Undos left: ${undosLeft}`;
+    statusDiv.textContent = `Click a square to begin! Skip two squares when going right, left, up or down. Skip one square when going diagonally. Undos left: ${undosLeft}`;
     buildGrid();
     clearInterval(moveTimer);
     clearHighlights();
