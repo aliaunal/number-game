@@ -29,8 +29,8 @@
       --dark-cell-bg: #222;
       --dark-cell-border: #444;
       --dark-cell-filled-bg: #81c784;
-      --dark-highlight-updown: rgba(129, 199, 132, 0.3);
-      --dark-highlight-diagonal: rgba(255, 202, 105, 0.3);
+      --dark-highlight-updown: rgba(100, 255, 150, 0.5);
+      --dark-highlight-diagonal: rgba(255, 220, 120, 0.5);
     }
 
     div {
@@ -168,9 +168,41 @@
       border-radius: 12px;
       transition: background-color 0.4s;
     }
+    
+    body.dark .highlight-updown {
+      background-color: var(--dark-highlight-updown);
+    }
+    body.dark .highlight-diagonal {
+      background-color: var(--dark-highlight-diagonal);
+    }
+    
     .highlight-recent {
       outline: 3px solid var(--highlight-recent);
       outline-offset: 2px;
+    }
+
+    .grid-dimmed {
+      opacity: 0.5;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .final-score-highlight {
+      outline: 4px solid #ff4444 !important;
+      outline-offset: 3px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { outline-color: #ff4444; }
+      50% { outline-color: #ff6666; }
+      100% { outline-color: #ff4444; }
+    }
+
+    @keyframes flash {
+      0% { background-color: rgba(76, 175, 80, 0.1); }
+      50% { background-color: rgba(76, 175, 80, 0.4); }
+      100% { background-color: rgba(76, 175, 80, 0.1); }
     }
 
     .undone {
@@ -192,8 +224,95 @@
 
     #timer {
       font-weight: 600;
-      font-size: 16px;
+      font-size: 18px;
       margin-bottom: 12px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+      border-radius: 25px;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      transition: all 0.3s ease;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    #timer.warning {
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+      animation: timerWarning 1s infinite;
+    }
+
+    #timer.danger {
+      background: linear-gradient(135deg, #f44336, #d32f2f);
+      animation: timerDanger 0.5s infinite;
+    }
+
+    @keyframes timerWarning {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes timerDanger {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.1); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    #gameOverModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--cell-bg);
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    body.dark .modal-content {
+      background: var(--dark-cell-bg);
+      color: var(--dark-text);
+    }
+
+    .modal-content h2 {
+      margin-top: 0;
+      color: #f44336;
+      font-size: 24px;
+    }
+
+    .modal-content p {
+      font-size: 18px;
+      margin: 15px 0;
+    }
+
+    .modal-button {
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .modal-button:hover {
+      background: var(--button-bg-hover);
     }
 
     /* Responsive */
@@ -235,7 +354,18 @@
   </div>
   <div id="grid"></div>
   <div id="status">Click a square to begin! Undos left: <span id="undoCount">2</span></div>
-  <div id="timer">Move Timer: <span id="moveTimer">15</span>s</div>
+  <div id="timer">Timer: <span id="moveTimer">15</span>s</div>
+
+  <!-- Game Over Modal -->
+  <div id="gameOverModal">
+    <div class="modal-content">
+      <h2>⏰ Time's Up!</h2>
+      <p>You ran out of time to make your move!</p>
+      <p>Score: <span id="finalScore">0</span> / <span id="totalCells">25</span></p>
+      <button class="modal-button" onclick="closeModal()">Try Again</button>
+      <button class="modal-button" onclick="startGame(); closeModal();">New Game</button>
+    </div>
+  </div>
 
 <script>
   const grid = document.getElementById('grid');
@@ -252,6 +382,7 @@
   let size = 5;
   let cells = [], board = [], currentNumber = 1, moveHistory = [], undosLeft = 2;
   let lastCell = null, moveTimer = null, secondsLeft = 15;
+  let gameEnded = false;
 
   // Populate grid size options 5 to 20
   for (let i = 5; i <= 20; i++) {
@@ -294,14 +425,56 @@
     clearInterval(moveTimer);
     secondsLeft = 15;
     timerSpan.textContent = secondsLeft;
+    
+    // Reset timer styling
+    const timerDiv = document.getElementById('timer');
+    timerDiv.classList.remove('warning', 'danger');
+    
     moveTimer = setInterval(() => {
       secondsLeft--;
       timerSpan.textContent = secondsLeft;
+      
+      // Add visual warnings
+      if (secondsLeft <= 5 && secondsLeft > 3) {
+        timerDiv.classList.add('warning');
+        timerDiv.classList.remove('danger');
+      } else if (secondsLeft <= 3) {
+        timerDiv.classList.add('danger');
+        timerDiv.classList.remove('warning');
+      }
+      
       if (secondsLeft <= 0) {
         clearInterval(moveTimer);
-        alert('⏰ Time\'s up! Make a move faster next time.');
+        gameEnded = true;
+        showGameOverModal();
       }
     }, 1000);
+  }
+
+  function showGameOverModal() {
+    const modal = document.getElementById('gameOverModal');
+    const finalScore = document.getElementById('finalScore');
+    const totalCells = document.getElementById('totalCells');
+    
+    finalScore.textContent = currentNumber - 1;
+    totalCells.textContent = size * size;
+    modal.style.display = 'flex';
+    
+    // Dim the grid and highlight final score
+    grid.classList.add('grid-dimmed');
+    if (lastCell) {
+      lastCell.classList.add('final-score-highlight');
+    }
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('gameOverModal');
+    modal.style.display = 'none';
+    grid.classList.remove('grid-dimmed');
+    if (lastCell) {
+      lastCell.classList.remove('final-score-highlight');
+    }
+    gameEnded = false;
   }
 
   function checkForNoMovesAndEndGame(r, c) {
@@ -318,8 +491,15 @@
 
     // If we get here, no moves were found
     clearInterval(moveTimer);
-    statusDiv.textContent = 'No viable moves left.';
+    gameEnded = true;
+    statusDiv.textContent = `Game Over! Final Score: ${currentNumber - 1} / ${size * size}`;
     document.getElementById('restartBtn').style.display = 'inline-block';
+    
+    // Dim the grid and highlight final score
+    grid.classList.add('grid-dimmed');
+    if (lastCell) {
+      lastCell.classList.add('final-score-highlight');
+    }
   }
 
   function cellClick(row, col) {
@@ -358,7 +538,6 @@
       clearInterval(moveTimer);
       statusDiv.textContent = '🎉 You completed the game!';
       confetti();
-      localStorage.setItem('stage-' + size, 'completed');
       clearHighlights();
       return;
     }
@@ -374,7 +553,7 @@
   }
 
   function undoMove() {
-    if (moveHistory.length === 0 || undosLeft <= 0 || hardcoreCheckbox.checked) return;
+    if (moveHistory.length === 0 || undosLeft <= 0 || hardcoreCheckbox.checked || gameEnded) return;
     const [r, c] = moveHistory.pop();
     board[r][c] = 0;
     cells[r][c].textContent = '';
@@ -383,8 +562,19 @@
     currentNumber--;
     undosLeft--;
     undoCountDisplay.textContent = undosLeft;
-    const [prevR, prevC] = moveHistory.at(-1) || [r, c];
-    highlightMoves(prevR, prevC);
+    
+    // Remove any game-over styling
+    grid.classList.remove('grid-dimmed');
+    if (cells[r][c]) {
+      cells[r][c].classList.remove('final-score-highlight');
+    }
+    
+    if (moveHistory.length > 0) {
+      const [prevR, prevC] = moveHistory[moveHistory.length - 1];
+      highlightMoves(prevR, prevC);
+    } else {
+      clearHighlights();
+    }
     updateTimer();
   }
 
@@ -422,13 +612,22 @@
     buildGrid();
     clearInterval(moveTimer);
     clearHighlights();
+    gameEnded = false;
+    
+    // Reset timer styling
+    const timerDiv = document.getElementById('timer');
+    timerDiv.classList.remove('warning', 'danger');
+    
+    // Hide restart button and close modal if open
     document.getElementById('restartBtn').style.display = 'none';
+    closeModal();
   }
 
   // Keyboard controls: arrows to move selection, Enter to place number on current cell
   document.addEventListener('keydown', (e) => {
-    if (!lastCell) return;
-    let [r, c] = moveHistory.at(-1) || [0, 0];
+    if (gameEnded || moveHistory.length === 0) return;
+    
+    let [r, c] = moveHistory[moveHistory.length - 1];
     if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
     if (e.key === 'ArrowDown') r = Math.min(size - 1, r + 1);
     if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
