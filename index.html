@@ -32,11 +32,11 @@
       --dark-highlight-updown: rgba(129, 199, 132, 0.3);
       --dark-highlight-diagonal: rgba(255, 202, 105, 0.3);
     }
-   
+
     div {
       white-space: pre-line;
     }
-    
+
     body {
       font-family: 'Raleway', sans-serif;
       background-color: var(--bg-color);
@@ -221,6 +221,7 @@
       <select id="gridSize"></select>
     </label>
     <button onclick="startGame()">Start Game</button>
+    <button id="restartBtn" onclick="startGame()" style="display:none;">Restart</button>
     <button onclick="undoMove()">Undo</button>
     <label class="toggle">
       <input type="checkbox" id="hideNumbers" /> Hide Numbers
@@ -303,6 +304,24 @@
     }, 1000);
   }
 
+  function checkForNoMovesAndEndGame(r, c) {
+    if (hardcoreCheckbox.checked) return;
+
+    const allDirs = [...upDownDirs, ...diagonalDirs];
+    for (const [dr, dc] of allDirs) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (isInBounds(nr, nc) && board[nr][nc] === 0) {
+        return; // Found a valid move, so exit
+      }
+    }
+
+    // If we get here, no moves were found
+    clearInterval(moveTimer);
+    statusDiv.textContent = 'No viable moves left.';
+    document.getElementById('restartBtn').style.display = 'inline-block';
+  }
+
   function cellClick(row, col) {
     if (board[row][col] !== 0) return; // already filled
 
@@ -350,6 +369,8 @@
     } else {
       clearHighlights();
     }
+
+    checkForNoMovesAndEndGame(row, col);
   }
 
   function undoMove() {
@@ -401,6 +422,7 @@
     buildGrid();
     clearInterval(moveTimer);
     clearHighlights();
+    document.getElementById('restartBtn').style.display = 'none';
   }
 
   // Keyboard controls: arrows to move selection, Enter to place number on current cell
